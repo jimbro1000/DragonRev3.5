@@ -23,6 +23,99 @@ switched to surface mount technology. This means the board can be
 part assembled at relatively low cost, leaving just the major ICs,
 ports, connectors and relay to be hand assembled.
 
+## Core Design ##
+### Main Board ###
+
+The main board replicates the footprint of the original D64 PCB.
+Ports and fixings are all in their original positions.
+
+The CPU lives on the main board with any speed variant supported
+including the HD63C09. The onboard ROM is integrated into a single 
+chip holding both banks of the D64 ROM image.
+
+All IO (except video) is performed by the original hardware so the 
+two PIAs and UART are retained.
+
+The device select signals for peripherals has been disambiguated
+from two devices which repeat the same four addresses eight times, 
+to sixteen devices, each with four mapped addresses.
+
+* $FF00-$FF03 (P0a) is still the original PIA0
+* $FF04-$FF07 (P0b) is the original UART
+* $FF20-$FF23 (P1a) is still the original PIA1
+
+These three blocks maintain compatibility with the original ROM
+software.
+
+The other blocks (P0c-P0g and P1b-P1g) are unused and can be
+adopted for other hardware (see audio)
+
+### Core Board ###
+
+The core board provides RAM, Video and SAM functionality. The
+minimum version of this would be the original RAM, VDG and SAM
+chips which effectively reproduces the original D64 specification.
+
+At this time two upgrade core boards exist. The first is a mild
+upgrade that provides 2MB of RAM, a SAMx implementation and an
+upgraded VDG that replicates the video functionality of the 
+CoCo3 GIME chip
+
+The second core board provides all of the capabilities of the
+first board but adds a soft 6809 CPU that can operate alongside
+or instead of the CPU on the main board. This second CPU can
+operate at much higher speeds than the original, match the
+speed of the original or be completely disabled. When both
+CPUs are operating the second CPU can be completely detached
+from everything except RAM and running on an independent
+clock cycle, or it can share the full bus with the hardware
+CPU utilising the bus mastering signals.
+
+The second core also introduces a DMA capability that enables
+very fast memory copy actions, running independently of either
+CPU.
+
+The video capabilities of the second core add sprite handling
+and tile based video modes, all in a layered video system that
+allows tiles, bitmaps and sprites to exist on the same display.
+
+For details of the core implementations see the separate
+hardware and firmware repositories.
+
+### Audio Board ###
+
+The main board will (but does not currently) provide a socket
+for an audio upgrade. The proposal is to utilise four or six
+peripheral address blocks to provide an interface to the audio
+board. Each block effectively represents a single audio device.
+
+The multi device approach should allow the audio board to 
+generate a rich stereo output with multiple audio waveforms
+per stereo channel.
+
+Optionally I want to look at live mixing of the audio to allow
+user selection of which waveform ends up on which channel. This
+would likely consume another peripheral address block.
+
+Following this approach would permit the use of original sound
+generator chips but has the problem of identifying the source
+of interrupts.
+
+An alternative is to define a soft audio generator in a MCU
+or CPLD that focuses all of the IO into a single hardware
+device (possibly still using multiple peripheral IO blocks)
+but potentially makes the hardware interface non-standard.
+If a suitable open source firmware definition can be
+identified, this is likely to be the better option.
+
+An example of this would be the [YM2149 PSG System](https://github.com/nockieboy/YM2149_PSG_system)
+that implements a simulation of dual YM2149s (or 
+AY-3-8910s) with stereo mixer and bass and treble controls.
+
+Due to the limited external IO required this could be implemeted
+on a relatively cheap, modest FPGA device rather than the main core
+board which requires a significant level of IO connectivity.
+
 ## Modifications ##
 ### Joysticks ###
 
